@@ -1,0 +1,18 @@
+#
+# this is your module manifest and used by Titanium
+# during compilation, packaging, distribution, etc.
+#
+version: 1.0.0
+apiversion: 4
+architectures: arm64-v8a armeabi-v7a x86 x86_64
+description: ti.pdftools
+author: Michael Gangolf
+license: MIT
+copyright: Copyright (c) 2021 by Michael Gangolf
+
+# these should not be edited
+name: ti.pdftools
+moduleid: ti.pdftools
+guid: bbb0c29d-95e4-4799-888a-085a0e004f8c
+platform: android
+minsdk: 9.0.0.GA

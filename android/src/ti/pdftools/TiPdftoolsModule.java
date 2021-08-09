@@ -8,7 +8,17 @@
  */
 package ti.pdftools;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 import com.tom_roush.pdfbox.multipdf.PDFMergerUtility;
+import com.tom_roush.pdfbox.pdmodel.PDDocument;
+import com.tom_roush.pdfbox.pdmodel.PDPage;
+import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
+import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
+import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory;
+import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,6 +68,7 @@ public class TiPdftoolsModule extends KrollModule
 					try {
 						InputStream iostream = file.getInputStream();
 						mergerUtility.addSource(iostream);
+						iostream.close();
 					} catch (IOException e) {
 						Log.e(LCAT, "File error: " + e.getMessage());
 					}
@@ -68,6 +79,7 @@ public class TiPdftoolsModule extends KrollModule
 					try {
 						InputStream iostream = file.getInputStream();
 						mergerUtility.addSource(iostream);
+						iostream.close();
 					} catch (IOException e) {
 						Log.e(LCAT, "File error: " + e.getMessage());
 					}
@@ -87,6 +99,83 @@ public class TiPdftoolsModule extends KrollModule
 			} else {
 				return null;
 			}
+		}
+		return null;
+	}
+
+	// Methods
+	@Kroll.method
+	public TiBlob imagesToPdf(Object obj)
+	{
+		PDFMergerUtility mergerUtility = new PDFMergerUtility();
+		PDDocument document = new PDDocument();
+
+		if (obj instanceof Object[]) {
+			Object[] files = (Object[]) obj;
+
+
+			for (int i = 0; i < files.length; ++i) {
+				if (files[i] instanceof TiFileProxy) {
+					TiBaseFile file = ((TiFileProxy) files[i]).getBaseFile();
+					Log.d(LCAT, "File size: " + file.size());
+					try {
+						InputStream iostream = file.getInputStream();
+						Bitmap bmp = BitmapFactory.decodeStream(iostream);
+						float width = bmp.getWidth();
+						float height = bmp.getHeight();
+
+						PDPage page = new PDPage(new PDRectangle(width, height));
+						document.addPage(page);
+
+						PDImageXObject img = LosslessFactory.createFromImage(document, bmp);
+						PDPageContentStream contentStream = new PDPageContentStream(document, page);
+						contentStream.drawImage(img, 0, 0);
+						contentStream.close();
+						iostream.close();
+					} catch (IOException e) {
+						Log.e(LCAT, "File error: " + e.getMessage());
+					}
+				} else if (files[i] instanceof String) {
+					String url = TiUrl.resolve("", (String) files[i], null);
+					TiBaseFile file = TiFileFactory.createTitaniumFile(new String[] { url }, false);
+
+					try {
+						InputStream iostream = file.getInputStream();
+						Bitmap bmp = BitmapFactory.decodeStream(iostream);
+						float width = bmp.getWidth();
+						float height = bmp.getHeight();
+
+						PDPage page = new PDPage(new PDRectangle(width, height));
+						document.addPage(page);
+
+						PDImageXObject img = PDImageXObject.createFromFile(file.nativePath(), document);
+						PDPageContentStream contentStream = new PDPageContentStream(document, page);
+						contentStream.drawImage(img, 0, 0);
+						contentStream.close();
+						iostream.close();
+					} catch (IOException e) {
+						Log.e(LCAT, "File error: " + e.getMessage());
+					}
+				}
+			}
+
+			TiBaseFile outfile = TiFileFactory.createTitaniumFile(System.currentTimeMillis() + ".pdf", true);
+			try {
+				document.save(outfile.getNativeFile());
+				document.close();
+				if (outfile.size() > 0) {
+					return TiBlob.blobFromFile(outfile);
+				} else {
+					return null;
+				}
+			} catch (IOException e) {
+
+			}
+		}
+		try {
+			document.close();
+		} catch (IOException e) {
+
 		}
 		return null;
 	}

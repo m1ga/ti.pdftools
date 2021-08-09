@@ -24,6 +24,15 @@ var file = pdftools.merge([
 	f1, f2
 ]);
 
+/*
+var f1 = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory, "image1.jpg");
+var f2 = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory, "image2.png");
+
+var file = pdftools.imagesToPdf([
+	f1, f2
+]);
+*/
+
 // open merged PDF file
 var intent = Ti.Android.createIntent({
     action: Ti.Android.ACTION_VIEW,
@@ -37,21 +46,28 @@ Ti.Android.currentActivity.startActivity(open);
 ## Methods
 
 <table>
-<thead>
-<tr>
-<th>method</th>
-<th>description</th>
-<th>parameter</th>
-<th>return</th>
-</tr>
+    <thead>
+    <tr>
+        <th>method</th>
+        <th>description</th>
+        <th>parameter</th>
+        <th>return</th>
+    </tr>
 </thead>
 <tr>
-<td>merge</td>
-<td>will merge multiple PDF into one</td>
-<td>Array of PDF files</td>
-<td>null or TiBlob</td>
+    <td>merge</td>
+    <td>will merge multiple PDF into one</td>
+    <td>Array of PDF files</td>
+    <td>null or TiBlob</td>
+</tr>
+<tr>
+    <td>imagesToPdf</td>
+    <td>will merge multiple images into a PDF</td>
+    <td>Array of image files</td>
+    <td>null or TiBlob</td>
 </tr>
 </table>
+
 
 
 

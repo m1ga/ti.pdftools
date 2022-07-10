@@ -196,7 +196,7 @@ public class TiPdftoolsModule extends KrollModule
 	@Kroll.method
 	public TiBlob createPDF(Object obj) {
 		PDDocument document = new PDDocument();
-		PDPage page = new PDPage();
+		PDPage page = new PDPage(PDRectangle.A4);
 		document.addPage(page);
 		PDPageContentStream contentStream;
 		PDFont font = PDType1Font.HELVETICA;

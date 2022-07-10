@@ -58,7 +58,7 @@ var pdfFile = pdftools.createPDF([{
 		y: 30,
 		fontSize: 30
 	}
-]
+]);
 ```
 
 ## Methods

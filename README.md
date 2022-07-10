@@ -46,19 +46,63 @@ Ti.Android.currentActivity.startActivity(open);
 #### create a new PDF
 
 ```js
-var pdfFile = pdftools.createPDF([{
-		text: "Hello",
-		x: 10,
-		y: 10,
-		fontSize: 20
-	},
-	{
-		text: "Titanium",
-		x: 10,
-		y: 30,
-		fontSize: 30
+const win = Ti.UI.createWindow({});
+const btn = Ti.UI.createButton({
+	title: "add"
+});
+btn.addEventListener("click", function() {
+	var pdftools = require('ti.pdftools');
+
+	var page1 = {
+		format: "a3",
+		content: [{
+				text: "Hello",
+				x: 10,
+				y: 10,
+				fontSize: 20
+			},
+			{
+				text: "Titanium",
+				x: 10,
+				y: 30,
+				fontSize: 30
+			}
+		]
+	};
+
+	var page2 = {
+		format: "a4",
+		content: [{
+				text: "Hello 2",
+				x: 10,
+				y: 10,
+				fontSize: 20
+			},
+			{
+				text: "Titanium 2",
+				x: 10,
+				y: 30,
+				fontSize: 30
+			}
+		]
+	};
+
+	var file = pdftools.createPDF({
+		pages: [page1, page2]
+	});
+
+	if (file != null) {
+		var intent = Ti.Android.createIntent({
+			action: Ti.Android.ACTION_VIEW,
+			type: "application/pdf",
+			data: file.nativePath
+		});
+		var open = Ti.Android.createIntentChooser(intent, "open pdf");
+		Ti.Android.currentActivity.startActivity(open);
 	}
-]);
+})
+win.add(btn);
+win.open();
 ```
 
 ## Methods
@@ -87,11 +131,11 @@ var pdfFile = pdftools.createPDF([{
 <tr>
     <td>createPDF</td>
     <td>will create a new PDF</td>
-    <td>Array of text objects: text, x, y, fontSize</td>
+    <td>Array of page objects: pages: [page, page]<br/>
+page object:  <code>{format: "a4", content: [{ text: "Hello", x: 10, y: 10, fontSize: 20}]}</code></td>
     <td>null or TiBlob</td>
 </tr>
 </table>
-
 
 
 

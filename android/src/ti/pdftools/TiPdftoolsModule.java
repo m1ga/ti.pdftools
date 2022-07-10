@@ -4,14 +4,13 @@
  * Copyright (c) 2009-2018 by Appcelerator, Inc. All Rights Reserved.
  * Licensed under the terms of the Apache Public License
  * Please see the LICENSE included with this distribution for details.
- *
  */
 package ti.pdftools;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.pdf.PdfDocument;
 
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 import com.tom_roush.pdfbox.io.MemoryUsageSetting;
 import com.tom_roush.pdfbox.multipdf.PDFMergerUtility;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
@@ -19,15 +18,9 @@ import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.font.PDFont;
-import com.tom_roush.pdfbox.pdmodel.font.PDFontDescriptor;
 import com.tom_roush.pdfbox.pdmodel.font.PDType1Font;
-import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
-// import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
-import java.io.IOException;
-import java.io.InputStream;
 
 import org.appcelerator.kroll.KrollDict;
 import org.appcelerator.kroll.KrollModule;
@@ -39,207 +32,213 @@ import org.appcelerator.titanium.TiBlob;
 import org.appcelerator.titanium.TiFileProxy;
 import org.appcelerator.titanium.io.TiBaseFile;
 import org.appcelerator.titanium.io.TiFileFactory;
-import org.appcelerator.titanium.util.TiFileHelper;
+import org.appcelerator.titanium.util.TiConvert;
 import org.appcelerator.titanium.util.TiUrl;
 import org.json.JSONObject;
 
-import ti.modules.titanium.filesystem.FileProxy;
-import ti.modules.titanium.filesystem.FilesystemModule;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
 
 @Kroll.module(name = "TiPdftools", id = "ti.pdftools")
-public class TiPdftoolsModule extends KrollModule
-{
+public class TiPdftoolsModule extends KrollModule {
 
-	// Standard Debugging variables
-	private static final String LCAT = "Ti.PDFTools";
-	private static final boolean DBG = TiConfig.LOGD;
+    // Standard Debugging variables
+    private static final String LCAT = "Ti.PDFTools";
+    private static final boolean DBG = TiConfig.LOGD;
 
-	public TiPdftoolsModule()
-	{
-		super();
-	}
+    public TiPdftoolsModule() {
+        super();
+    }
 
-	@Kroll.onAppCreate
-	public static void onAppCreate(TiApplication app)
-	{
-		PDFBoxResourceLoader.init(app);
-	}
+    @Kroll.onAppCreate
+    public static void onAppCreate(TiApplication app) {
+        PDFBoxResourceLoader.init(app);
+    }
 
-	// Methods
-	@Kroll.method
-	public TiBlob merge(Object obj)
-	{
-		PDFMergerUtility mergerUtility = new PDFMergerUtility();
+    // Methods
+    @Kroll.method
+    public TiBlob merge(Object obj) {
+        PDFMergerUtility mergerUtility = new PDFMergerUtility();
 
-		if (obj instanceof Object[]) {
-			Object[] files = (Object[]) obj;
+        if (obj instanceof Object[]) {
+            Object[] files = (Object[]) obj;
 
-			for (int i = 0; i < files.length; ++i) {
-				if (files[i] instanceof TiFileProxy) {
-					TiBaseFile file = ((TiFileProxy) files[i]).getBaseFile();
-					Log.d(LCAT, "File size: " + file.size());
-					try {
-						InputStream iostream = file.getInputStream();
-						mergerUtility.addSource(iostream);
-						iostream.close();
-					} catch (IOException e) {
-						Log.e(LCAT, "File error: " + e.getMessage());
-					}
-				} else if (files[i] instanceof String) {
-					String url = TiUrl.resolve("", (String) files[i], null);
-					TiBaseFile file = TiFileFactory.createTitaniumFile(new String[] { url }, false);
-					Log.d(LCAT, "File size: " + file.size());
-					try {
-						InputStream iostream = file.getInputStream();
-						mergerUtility.addSource(iostream);
-						iostream.close();
-					} catch (IOException e) {
-						Log.e(LCAT, "File error: " + e.getMessage());
-					}
-				}
-			}
+            for (int i = 0; i < files.length; ++i) {
+                if (files[i] instanceof TiFileProxy) {
+                    TiBaseFile file = ((TiFileProxy) files[i]).getBaseFile();
+                    Log.d(LCAT, "File size: " + file.size());
+                    try {
+                        InputStream iostream = file.getInputStream();
+                        mergerUtility.addSource(iostream);
+                        iostream.close();
+                    } catch (IOException e) {
+                        Log.e(LCAT, "File error: " + e.getMessage());
+                    }
+                } else if (files[i] instanceof String) {
+                    String url = TiUrl.resolve("", (String) files[i], null);
+                    TiBaseFile file = TiFileFactory.createTitaniumFile(new String[]{url}, false);
+                    Log.d(LCAT, "File size: " + file.size());
+                    try {
+                        InputStream iostream = file.getInputStream();
+                        mergerUtility.addSource(iostream);
+                        iostream.close();
+                    } catch (IOException e) {
+                        Log.e(LCAT, "File error: " + e.getMessage());
+                    }
+                }
+            }
 
-			TiBaseFile outfile = TiFileFactory.createTitaniumFile(System.currentTimeMillis() + ".pdf", true);
-			try {
-				mergerUtility.setDestinationStream(outfile.getOutputStream());
-				mergerUtility.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
-			} catch (IOException e) {
-				Log.e(LCAT, e.getMessage());
-			}
+            TiBaseFile outfile = TiFileFactory.createTitaniumFile(System.currentTimeMillis() + ".pdf", true);
+            try {
+                mergerUtility.setDestinationStream(outfile.getOutputStream());
+                mergerUtility.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+            } catch (IOException e) {
+                Log.e(LCAT, e.getMessage());
+            }
 
-			if (outfile.size() > 0) {
-				return TiBlob.blobFromFile(outfile);
-			} else {
-				return null;
-			}
-		}
-		return null;
-	}
+            if (outfile.size() > 0) {
+                return TiBlob.blobFromFile(outfile);
+            } else {
+                return null;
+            }
+        }
+        return null;
+    }
 
-	// Methods
-	@Kroll.method
-	public TiBlob imagesToPdf(Object obj)
-	{
-		PDFMergerUtility mergerUtility = new PDFMergerUtility();
-		PDDocument document = new PDDocument();
+    // Methods
+    @Kroll.method
+    public TiBlob imagesToPdf(Object obj) {
+        PDFMergerUtility mergerUtility = new PDFMergerUtility();
+        PDDocument document = new PDDocument();
 
-		if (obj instanceof Object[]) {
-			Object[] files = (Object[]) obj;
+        if (obj instanceof Object[]) {
+            Object[] files = (Object[]) obj;
 
 
-			for (int i = 0; i < files.length; ++i) {
-				if (files[i] instanceof TiFileProxy) {
-					TiBaseFile file = ((TiFileProxy) files[i]).getBaseFile();
-					Log.d(LCAT, "File size: " + file.size());
-					try {
-						InputStream iostream = file.getInputStream();
-						Bitmap bmp = BitmapFactory.decodeStream(iostream);
-						float width = bmp.getWidth();
-						float height = bmp.getHeight();
+            for (int i = 0; i < files.length; ++i) {
+                if (files[i] instanceof TiFileProxy) {
+                    TiBaseFile file = ((TiFileProxy) files[i]).getBaseFile();
+                    Log.d(LCAT, "File size: " + file.size());
+                    try {
+                        InputStream iostream = file.getInputStream();
+                        Bitmap bmp = BitmapFactory.decodeStream(iostream);
+                        float width = bmp.getWidth();
+                        float height = bmp.getHeight();
 
-						PDPage page = new PDPage(new PDRectangle(width, height));
-						document.addPage(page);
+                        PDPage page = new PDPage(new PDRectangle(width, height));
+                        document.addPage(page);
 
-						PDImageXObject img = LosslessFactory.createFromImage(document, bmp);
-						PDPageContentStream contentStream = new PDPageContentStream(document, page);
-						contentStream.drawImage(img, 0, 0);
-						contentStream.close();
-						iostream.close();
-					} catch (IOException e) {
-						Log.e(LCAT, "File error: " + e.getMessage());
-					}
-				} else if (files[i] instanceof String) {
-					String url = TiUrl.resolve("", (String) files[i], null);
-					TiBaseFile file = TiFileFactory.createTitaniumFile(new String[] { url }, false);
+                        PDImageXObject img = LosslessFactory.createFromImage(document, bmp);
+                        PDPageContentStream contentStream = new PDPageContentStream(document, page);
+                        contentStream.drawImage(img, 0, 0);
+                        contentStream.close();
+                        iostream.close();
+                    } catch (IOException e) {
+                        Log.e(LCAT, "File error: " + e.getMessage());
+                    }
+                } else if (files[i] instanceof String) {
+                    String url = TiUrl.resolve("", (String) files[i], null);
+                    TiBaseFile file = TiFileFactory.createTitaniumFile(new String[]{url}, false);
 
-					try {
-						InputStream iostream = file.getInputStream();
-						Bitmap bmp = BitmapFactory.decodeStream(iostream);
-						float width = bmp.getWidth();
-						float height = bmp.getHeight();
+                    try {
+                        InputStream iostream = file.getInputStream();
+                        Bitmap bmp = BitmapFactory.decodeStream(iostream);
+                        float width = bmp.getWidth();
+                        float height = bmp.getHeight();
 
-						PDPage page = new PDPage(new PDRectangle(width, height));
-						document.addPage(page);
+                        PDPage page = new PDPage(new PDRectangle(width, height));
+                        document.addPage(page);
 
-						PDImageXObject img = PDImageXObject.createFromFile(file.nativePath(), document);
-						PDPageContentStream contentStream = new PDPageContentStream(document, page);
-						contentStream.drawImage(img, 0, 0);
-						contentStream.close();
-						iostream.close();
-					} catch (IOException e) {
-						Log.e(LCAT, "File error: " + e.getMessage());
-					}
-				}
-			}
+                        PDImageXObject img = PDImageXObject.createFromFile(file.nativePath(), document);
+                        PDPageContentStream contentStream = new PDPageContentStream(document, page);
+                        contentStream.drawImage(img, 0, 0);
+                        contentStream.close();
+                        iostream.close();
+                    } catch (IOException e) {
+                        Log.e(LCAT, "File error: " + e.getMessage());
+                    }
+                }
+            }
 
-			TiBaseFile outfile = TiFileFactory.createTitaniumFile(System.currentTimeMillis() + ".pdf", true);
-			try {
-				document.save(outfile.getNativeFile());
-				document.close();
-				if (outfile.size() > 0) {
-					return TiBlob.blobFromFile(outfile);
-				} else {
-					return null;
-				}
-			} catch (IOException e) {
+            TiBaseFile outfile = TiFileFactory.createTitaniumFile(System.currentTimeMillis() + ".pdf", true);
+            try {
+                document.save(outfile.getNativeFile());
+                document.close();
+                if (outfile.size() > 0) {
+                    return TiBlob.blobFromFile(outfile);
+                } else {
+                    return null;
+                }
+            } catch (IOException e) {
 
-			}
-		}
-		try {
-			document.close();
-		} catch (IOException e) {
+            }
+        }
+        try {
+            document.close();
+        } catch (IOException e) {
 
-		}
-		return null;
-	}
+        }
+        return null;
+    }
 
-	@Kroll.method
-	public TiBlob createPDF(Object obj) {
-		PDDocument document = new PDDocument();
-		PDPage page = new PDPage(PDRectangle.A4);
-		document.addPage(page);
-		PDPageContentStream contentStream;
-		PDFont font = PDType1Font.HELVETICA;
+    @Kroll.method
+    public TiBlob createPDF(KrollDict obj) {
+        PDDocument document = new PDDocument();
 
-		try {
-			// Define a content stream for adding to the PDF
-			contentStream = new PDPageContentStream(document, page);
+        Object[] pages = (Object[]) obj.get("pages");
+        for (int i = 0; i < pages.length; ++i) {
+            HashMap pageObject = (HashMap) pages[i];
 
-			if (obj instanceof Object[]) {
-				Object[] text = (Object[]) obj;
+            PDRectangle format = PDRectangle.A4;
+            if (pageObject.get("format").toString().toLowerCase() == "a5") {
+                format = PDRectangle.A5;
+            } else if (pageObject.get("format").toString().toLowerCase() == "a3") {
+                format = PDRectangle.A3;
+            } else if (pageObject.get("format").toString().toLowerCase() == "a6") {
+                format = PDRectangle.A6;
+            }
+            PDPage page = new PDPage(format);
+            document.addPage(page);
+            PDPageContentStream contentStream;
+            PDFont font = PDType1Font.HELVETICA;
+            try {
+                contentStream = new PDPageContentStream(document, page);
+                Object textContent = pageObject.get("content");
+                if (textContent instanceof Object[]) {
+                    Object[] text = (Object[]) textContent;
 
-				for (int i = 0; i < text.length; ++i) {
-					JSONObject kd = new JSONObject(text[i].toString());
-					contentStream.beginText();
-					contentStream.setFont(font, kd.getInt("fontSize"));
-					contentStream.newLineAtOffset(kd.getInt("x"), kd.getInt("y"));
-					contentStream.showText(kd.getString("text"));
-					contentStream.endText();
-				}
-			}
-			// Draw a green rectangle
-			// contentStream.addRect(5, 500, 100, 100);
-			// contentStream.setNonStrokingColor(0, 255, 125);
-			// contentStream.fill();
+                    for (int j = 0; j < text.length; ++j) {
+                        HashMap kd = (HashMap) text[j];
+                        contentStream.beginText();
+                        contentStream.setFont(font, TiConvert.toInt(kd.get("fontSize")));
+                        contentStream.newLineAtOffset(TiConvert.toInt(kd.get("x")), TiConvert.toInt(kd.get("y")));
+                        contentStream.showText(TiConvert.toString(kd.get("text")));
+                        contentStream.endText();
+                    }
+                }
 
+                contentStream.close();
+            } catch (Exception e) {
+				Log.e(LCAT, "Error: " + e.getMessage());
+            }
 
-			// Make sure that the content stream is closed:
-			contentStream.close();
+        }
 
-			// Save the final pdf document to a file
-			TiBaseFile outfile = TiFileFactory.createTitaniumFile(System.currentTimeMillis() + ".pdf", true);
-			try {
-				document.save(outfile.getNativeFile());
-				document.close();
-				if (outfile.size() > 0) {
-					return TiBlob.blobFromFile(outfile);
-				} else {
-					return null;
-				}
-			} catch (IOException e) {
-			}
-		} catch (Exception e) {
-		}
-		return null;
-	}
+        try {
+            // Save the final pdf document to a file
+            TiBaseFile outfile = TiFileFactory.createTitaniumFile(System.currentTimeMillis() + ".pdf", true);
+            document.save(outfile.getNativeFile());
+            document.close();
+            if (outfile.size() > 0) {
+                return TiBlob.blobFromFile(outfile);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            //
+            Log.e(LCAT, "Error: " + e.getMessage());
+        }
+        return null;
+    }
 }

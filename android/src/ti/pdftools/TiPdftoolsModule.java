@@ -10,18 +10,26 @@ package ti.pdftools;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.pdf.PdfDocument;
 
+import com.tom_roush.pdfbox.io.MemoryUsageSetting;
 import com.tom_roush.pdfbox.multipdf.PDFMergerUtility;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
+import com.tom_roush.pdfbox.pdmodel.font.PDFont;
+import com.tom_roush.pdfbox.pdmodel.font.PDFontDescriptor;
+import com.tom_roush.pdfbox.pdmodel.font.PDType1Font;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
+// import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.appcelerator.kroll.KrollDict;
 import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.kroll.common.Log;
@@ -31,7 +39,12 @@ import org.appcelerator.titanium.TiBlob;
 import org.appcelerator.titanium.TiFileProxy;
 import org.appcelerator.titanium.io.TiBaseFile;
 import org.appcelerator.titanium.io.TiFileFactory;
+import org.appcelerator.titanium.util.TiFileHelper;
 import org.appcelerator.titanium.util.TiUrl;
+import org.json.JSONObject;
+
+import ti.modules.titanium.filesystem.FileProxy;
+import ti.modules.titanium.filesystem.FilesystemModule;
 
 @Kroll.module(name = "TiPdftools", id = "ti.pdftools")
 public class TiPdftoolsModule extends KrollModule
@@ -89,7 +102,7 @@ public class TiPdftoolsModule extends KrollModule
 			TiBaseFile outfile = TiFileFactory.createTitaniumFile(System.currentTimeMillis() + ".pdf", true);
 			try {
 				mergerUtility.setDestinationStream(outfile.getOutputStream());
-				mergerUtility.mergeDocuments(true);
+				mergerUtility.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
 			} catch (IOException e) {
 				Log.e(LCAT, e.getMessage());
 			}
@@ -176,6 +189,56 @@ public class TiPdftoolsModule extends KrollModule
 			document.close();
 		} catch (IOException e) {
 
+		}
+		return null;
+	}
+
+	@Kroll.method
+	public TiBlob createPDF(Object obj) {
+		PDDocument document = new PDDocument();
+		PDPage page = new PDPage();
+		document.addPage(page);
+		PDPageContentStream contentStream;
+		PDFont font = PDType1Font.HELVETICA;
+
+		try {
+			// Define a content stream for adding to the PDF
+			contentStream = new PDPageContentStream(document, page);
+
+			if (obj instanceof Object[]) {
+				Object[] text = (Object[]) obj;
+
+				for (int i = 0; i < text.length; ++i) {
+					JSONObject kd = new JSONObject(text[i].toString());
+					contentStream.beginText();
+					contentStream.setFont(font, kd.getInt("fontSize"));
+					contentStream.newLineAtOffset(kd.getInt("x"), kd.getInt("y"));
+					contentStream.showText(kd.getString("text"));
+					contentStream.endText();
+				}
+			}
+			// Draw a green rectangle
+			// contentStream.addRect(5, 500, 100, 100);
+			// contentStream.setNonStrokingColor(0, 255, 125);
+			// contentStream.fill();
+
+
+			// Make sure that the content stream is closed:
+			contentStream.close();
+
+			// Save the final pdf document to a file
+			TiBaseFile outfile = TiFileFactory.createTitaniumFile(System.currentTimeMillis() + ".pdf", true);
+			try {
+				document.save(outfile.getNativeFile());
+				document.close();
+				if (outfile.size() > 0) {
+					return TiBlob.blobFromFile(outfile);
+				} else {
+					return null;
+				}
+			} catch (IOException e) {
+			}
+		} catch (Exception e) {
 		}
 		return null;
 	}

@@ -43,6 +43,24 @@ var open = Ti.Android.createIntentChooser(intent, "open pdf");
 Ti.Android.currentActivity.startActivity(open);
 ```
 
+#### create a new PDF
+
+```js
+var pdfFile = pdftools.createPDF([{
+		text: "Hello",
+		x: 10,
+		y: 10,
+		fontSize: 20
+	},
+	{
+		text: "Titanium",
+		x: 10,
+		y: 30,
+		fontSize: 30
+	}
+]
+```
+
 ## Methods
 
 <table>
@@ -64,6 +82,12 @@ Ti.Android.currentActivity.startActivity(open);
     <td>imagesToPdf</td>
     <td>will merge multiple images into a PDF</td>
     <td>Array of image files</td>
+    <td>null or TiBlob</td>
+</tr>
+<tr>
+    <td>createPDF</td>
+    <td>will create a new PDF</td>
+    <td>Array of text objects: text, x, y, fontSize</td>
     <td>null or TiBlob</td>
 </tr>
 </table>

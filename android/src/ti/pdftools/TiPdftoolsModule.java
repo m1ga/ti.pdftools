@@ -21,6 +21,8 @@ import com.tom_roush.pdfbox.pdmodel.font.PDFont;
 import com.tom_roush.pdfbox.pdmodel.font.PDType1Font;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import com.tom_roush.pdfbox.rendering.ImageType;
+import com.tom_roush.pdfbox.rendering.PDFRenderer;
 
 import org.appcelerator.kroll.KrollDict;
 import org.appcelerator.kroll.KrollModule;
@@ -36,6 +38,7 @@ import org.appcelerator.titanium.util.TiConvert;
 import org.appcelerator.titanium.util.TiUrl;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -183,6 +186,25 @@ public class TiPdftoolsModule extends KrollModule {
     }
 
     @Kroll.method
+    public void pdfToImage(Object obj) {
+        try {
+            TiBaseFile file = ((TiFileProxy) obj).getBaseFile();
+            InputStream iostream = file.getInputStream();
+            PDDocument document = PDDocument.load(iostream);
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+            for (int page = 0; page < document.getNumberOfPages(); ++page) {
+                Bitmap bmp = pdfRenderer.renderImageWithDPI(page, 300, ImageType.RGB);
+                KrollDict kd = new KrollDict();
+                kd.put("image", TiBlob.blobFromImage(bmp));
+                fireEvent("image", kd);
+            }
+            document.close();
+        } catch (Exception e) {
+            Log.e("--", e.getMessage());
+        }
+    }
+
+    @Kroll.method
     public TiBlob createPDF(KrollDict obj) {
         PDDocument document = new PDDocument();
 
@@ -220,7 +242,7 @@ public class TiPdftoolsModule extends KrollModule {
 
                 contentStream.close();
             } catch (Exception e) {
-				Log.e(LCAT, "Error: " + e.getMessage());
+                Log.e(LCAT, "Error: " + e.getMessage());
             }
 
         }

@@ -105,6 +105,23 @@ win.add(btn);
 win.open();
 ```
 
+#### Convert PDF to image
+```js
+var pdftools = require('ti.pdftools');
+const win = Ti.UI.createWindow({});
+const img = Ti.UI.createImageView({});
+
+var f1 = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory, "1.pdf");
+
+pdftools.addEventListener("image", function(e) {
+	img.image = e.image;
+})
+
+var file = pdftools.pdfToImage(f1);
+win.add(img);
+win.open();
+```
+
 ## Methods
 
 <table>
@@ -135,9 +152,17 @@ win.open();
 page object:  <code>{format: "a4", content: [{ text: "Hello", x: 10, y: 10, fontSize: 20}]}</code></td>
     <td>null or TiBlob</td>
 </tr>
+<tr>
+    <td>pdfToImage</td>
+    <td>will convert PDF pages to images. Fires the `image` event with `e.image`</td>
+    <td>File</td>
+    <td>-</td>
+</tr>
 </table>
 
+## Events
 
+* `image`: returns `e.image` for every PDF page.
 
 ## Author
 
